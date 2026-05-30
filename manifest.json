@@ -2,7 +2,7 @@
   "name": "숫자 순서대로! 🌟",
   "short_name": "숫자놀이",
   "description": "3~7세 아이를 위한 숫자 순서 규칙 발견 게임. 1부터 100까지 단위와 패턴을 재미있게 배워요!",
-  "start_url": "./index.html",
+  "start_url": "/kids-number-sequence/index.html",
   "display": "standalone",
   "background_color": "#f7f4ed",
   "theme_color": "#f59e0b",
@@ -23,5 +23,5 @@
   ],
   "categories": ["education", "kids", "games"],
   "lang": "ko",
-  "scope": "./"
+  "scope": "/kids-number-sequence/"
 }
