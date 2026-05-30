@@ -1,0 +1,18 @@
+# Broken backups
+index.html.broken.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+*.env
+
+# Large files (not needed)
+*.mp4
+*.mov

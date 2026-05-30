@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>숫자 순서대로! 🌟 | 3~7세 수 개념 놀이</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌟</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Fredoka:wght@400;500;600&display=swap');
+    
+    body {
+      font-family: 'Noto Sans KR', 'Fredoka', system-ui, sans-serif;
+      background: #f7f4ed;
+    }
+    
+    .game-font {
+      font-family: 'Fredoka', 'Noto Sans KR', system-ui, sans-serif;
+      font-weight: 600;
+    }
+
+    .level-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .level-card:active {
+      transform: scale(0.96);
+    }
+
+    .phase-header {
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    #game-grid {
+      display: grid;
+      gap: 6px;
+      background: #fffbeb;
+      border: 6px solid #fbbf24;
+      border-radius: 24px;
+      padding: 8px;
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      border-radius: 18px;
+      background: white;
+      border: 3px solid #e2e8f0;
+      color: #334155;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      font-size: clamp(1.05rem, 6.5vw, 2.1rem);
+      min-height: 0;
+      aspect-ratio: 1 / 1;
+      transition: transform 0.1s ease, background 0.2s ease, color 0.2s ease;
+      user-select: none;
+    }
+
+    .cell:active {
+      transform: scale(0.90);
+    }
+
+    .cell.found {
+      background: #10b981 !important;
+      color: white !important;
+      border-color: #10b981 !important;
+      box-shadow: none !important;
+    }
+
+    .safe-area {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  </style>
+</head>
+<body class="bg-[#f7f4ed] select-none">
+  <!-- START SCREEN (Level Selection) -->
+  <div id="start-screen" class="min-h-screen flex flex-col">
+    <div class="h-3 bg-gradient-to-r from-pink-400 via-amber-400 to-orange-400"></div>
+    
+    <div class="flex-1 flex flex-col px-5 pt-8 pb-6 max-w-[380px] mx-auto w-full">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6 px-1">
+        <div>
+          <div class="flex items-center gap-3">
+            <span class="text-4xl">🌟</span>
+            <div>
+              <div class="text-3xl font-black text-slate-800 tracking-tighter">숫자 순서대로!</div>
+              <div class="text-sm text-slate-500 -mt-1">3~7세 수 개념 놀이</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Level Selection Container -->
+      <div id="level-selection" class="space-y-7">
+        <!-- Dynamically populated by renderLevelSelection() -->
+      </div>
+
+      <div class="mt-auto pt-6 text-center">
+        <div class="text-[10px] text-slate-400">규칙을 발견하면 숫자가 점점 쉬워져요</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="hidden min-h-screen flex flex-col">
+    <div class="h-3 bg-gradient-to-r from-pink-400 via-amber-400 to-orange-400"></div>
+    
+    <div class="flex-1 flex flex-col px-4 pt-6 pb-6 max-w-[380px] mx-auto w-full safe-area">
+      <!-- Game Header -->
+      <div class="flex items-center justify-between mb-4 px-1">
+        <button onclick="exitToMenu()" 
+                class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white shadow-sm active:bg-gray-100 text-slate-700 font-medium text-sm">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>나가기</span>
+        </button>
+        
+        <div id="level-name" 
+             class="px-4 py-1 rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-sm">
+        </div>
+      </div>
+
+      <!-- Target & Rule Hint -->
+      <div class="bg-white rounded-3xl p-4 shadow-sm mb-4">
+        <div class="text-center">
+          <div class="text-xs text-slate-500 mb-1">다음 숫자를 찾아 규칙을 발견해요</div>
+          <div id="target-number" class="text-6xl font-black text-slate-800 game-font tracking-tighter">?</div>
+          <div class="mt-1 flex items-center justify-center gap-2">
+            <span id="progress" class="px-3 py-0.5 rounded-full bg-amber-100 text-amber-700 text-sm font-extrabold">0 / 0</span>
+            <span id="discovery-badge" class="hidden px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">규칙 발견!</span>
+          </div>
+          <div id="rule-hint" class="text-[11px] text-emerald-600 mt-1 font-semibold hidden"></div>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <div class="flex-1 flex items-center justify-center">
+        <div id="game-grid" class="w-full max-w-[340px]"></div>
+      </div>
+
+      <!-- Bottom Controls -->
+      <div class="pt-4">
+        <button onclick="showHint()" 
+                class="w-full py-3.5 rounded-2xl bg-white text-slate-600 font-semibold flex items-center justify-center gap-2 shadow-sm active:bg-gray-100 text-sm">
+          <i class="fa-solid fa-lightbulb"></i>
+          <span>힌트 보기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Celebration Modal -->
+  <div id="celebration-modal" onclick="hideCelebration()" 
+       class="hidden fixed inset-0 bg-black/40 flex items-end justify-center z-50">
+    <div onclick="event.stopImmediatePropagation()" 
+         class="bg-white w-full max-w-[380px] rounded-t-3xl p-8 text-center">
+      <div class="text-6xl mb-4">🎉</div>
+      <div class="text-3xl font-black text-pink-600 mb-2 game-font">대단해요!</div>
+      <div class="text-lg text-slate-600 mb-6">규칙을 잘 발견했어요!</div>
+      
+      <div class="flex gap-3">
+        <button onclick="hideCelebration(); exitToMenu()" 
+                class="flex-1 py-3.5 rounded-2xl bg-slate-100 font-semibold text-sm">그만하기</button>
+        <button onclick="hideCelebration(); nextLevelOrReplay()" 
+                class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 to-orange-500 text-white font-extrabold text-sm">
+          계속하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== GAME DATA (v3.1 Phase + Track) ====================
+    const GAME_DATA = {
+      phases: [
+        {
+          id: 1, name: "Phase 1. 순서 감각", emoji: "🐣", goal: "1의 단위로 숫자가 이어진다는 규칙 발견",
+          tracks: [
+            { id: "1-A", name: "1부터 10까지", range: "1~10", step: 1, start: 1, count: 6, cols: 2, color: "#10b981", desc: "가장 기본적인 1의 단위" },
+            { id: "1-B", name: "1부터 20까지", range: "1~20", step: 1, start: 1, count: 8, cols: 3, color: "#10b981", desc: "1의 단위 확장" },
+            { id: "1-C", name: "1부터 30까지", range: "1~30", step: 1, start: 1, count: 9, cols: 3, color: "#10b981", desc: "빠른 아이용 확장" }
+          ]
+        },
+        {
+          id: 2, name: "Phase 2. 패턴 발견", emoji: "⭐", goal: "일정한 간격(단위)으로 뛰는 규칙 발견",
+          tracks: [
+            { id: "2-A", name: "5씩 뛰어넘기", range: "5~50", step: 5, start: 5, count: 8, cols: 3, color: "#f59e0b", desc: "5라는 새로운 단위 발견" },
+            { id: "2-B", name: "10씩 커지는 수", range: "10~100", step: 10, start: 10, count: 8, cols: 3, color: "#f59e0b", desc: "10 단위의 강한 인지 ★" },
+            { id: "2-C", name: "2씩 뛰어넘기", range: "2~40", step: 2, start: 2, count: 8, cols: 3, color: "#f59e0b", desc: "짝수 개념 + 2 단위" }
+          ]
+        },
+        {
+          id: 3, name: "Phase 3. 10의 자리 직관", emoji: "🦊", goal: "10이 특별한 단위라는 것을 명확히 인지",
+          tracks: [
+            { id: "3-A", name: "10부터 50까지", range: "10~50", step: 1, start: 10, count: 8, cols: 3, color: "#0ea5e9", desc: "10부터 시작하는 10 단위 집중 ★" },
+            { id: "3-B", name: "20부터 100까지", range: "20~100", step: 1, start: 20, count: 8, cols: 3, color: "#0ea5e9", desc: "10 단위 확장" }
+          ]
+        },
+        {
+          id: 4, name: "Phase 4. 큰 수와 크기", emoji: "🚀", goal: "큰 단위에서도 규칙이 존재함을 발견",
+          tracks: [
+            { id: "4-A", name: "100부터 300까지", range: "100~300", step: 10, start: 100, count: 7, cols: 3, color: "#f43f5e", desc: "100 단위 + 10 단위 복합" }
+          ]
+        }
+      ]
+    };
+
+    let currentLevel = null;
+    let sequence = [];
+    let foundCount = 0;
+    let shuffledSequence = [];
+
+    // ==================== RENDER LEVEL SELECTION (robust listeners) ====================
+    function renderLevelSelection() {
+      const container = document.getElementById('level-selection');
+      if (!container) {
+        console.error('level-selection container not found');
+        return;
+      }
+
+      let html = '';
+
+      GAME_DATA.phases.forEach(phase => {
+        const isWide = phase.tracks.length === 1;
+        
+        html += `
+          <div class="space-y-3">
+            <div class="px-1">
+              <div class="flex items-center gap-3 mb-1">
+                <span class="text-3xl">${phase.emoji}</span>
+                <div class="flex-1">
+                  <div class="font-black text-2xl phase-header" style="color:${phase.tracks[0].color}">${phase.name}</div>
+                </div>
+              </div>
+              <p class="text-[13px] pl-11 text-slate-600 leading-snug">${phase.goal}</p>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-2.5">
+        `;
+
+        phase.tracks.forEach(track => {
+          html += `
+            <button data-track-id="${track.id}"
+                    class="level-card bg-white border-4 rounded-3xl p-4 text-left flex flex-col justify-center shadow-sm active:scale-[0.985]"
+                    style="border-color: ${track.color}33; min-height: ${isWide ? '78px' : '92px'};">
+              <div class="flex items-baseline justify-between mb-0.5">
+                <div class="font-extrabold text-xl leading-none" style="color:${track.color}">
+                  ${track.name}
+                </div>
+                <div class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/70" style="color:${track.color}99">
+                  ${track.range}
+                </div>
+              </div>
+              <div class="text-sm text-slate-600">${track.desc}</div>
+              <div class="mt-1 text-[10px] text-slate-400">${track.step}씩 뛰는 패턴</div>
+            </button>
+          `;
+        });
+
+        html += `</div></div>`;
+      });
+
+      container.innerHTML = html;
+
+      // Robust event listeners (no inline onclick)
+      container.querySelectorAll('button[data-track-id]').forEach(btn => {
+        const trackId = btn.getAttribute('data-track-id');
+        btn.addEventListener('click', () => {
+          console.log('[Game] Level card clicked via listener:', trackId);
+          startLevel(trackId);
+        });
+      });
+
+      console.log('[Game] Level selection rendered with', GAME_DATA.phases.length, 'phases');
+    }
+
+    // ==================== START LEVEL (defensive) ====================
+    function startLevel(trackId) {
+      let foundTrack = null;
+      
+      GAME_DATA.phases.forEach(phase => {
+        phase.tracks.forEach(track => {
+          if (track.id === trackId) foundTrack = track;
+        });
+      });
+      
+      if (!foundTrack) {
+        console.error('Track not found:', trackId);
+        return;
+      }
+
+      // Full reset
+      currentLevel = foundTrack;
+      sequence = [];
+      foundCount = 0;
+      shuffledSequence = [];
+
+      // Generate correct sequence
+      for (let i = 0; i < currentLevel.count; i++) {
+        sequence.push(currentLevel.start + (i * currentLevel.step));
+      }
+
+      // Shuffle for discovery mechanic
+      shuffledSequence = [...sequence];
+      for (let i = shuffledSequence.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledSequence[i], shuffledSequence[j]] = [shuffledSequence[j], shuffledSequence[i]];
+      }
+
+      // Switch screens cleanly
+      document.getElementById('start-screen').classList.add('hidden');
+      const gameScreen = document.getElementById('game-screen');
+      gameScreen.classList.remove('hidden');
+
+      // Header
+      const header = document.getElementById('level-name');
+      header.innerHTML = `<span style="color:${currentLevel.color}">${currentLevel.name}</span>`;
+      header.style.background = `${currentLevel.color}15`;
+      header.style.border = `1px solid ${currentLevel.color}30`;
+
+      // Reset game UI elements
+      document.getElementById('target-number').textContent = '?';
+      const progressEl = document.getElementById('progress');
+      if (progressEl) progressEl.textContent = `0 / ${currentLevel.count}`;
+      const hintEl = document.getElementById('rule-hint');
+      hintEl.textContent = '';
+      hintEl.classList.add('hidden');
+      const badge = document.getElementById('discovery-badge');
+      if (badge) badge.classList.add('hidden');
+
+      // Build fresh grid
+      buildGrid();
+
+      console.log('[Game] Started level:', currentLevel.id, 'step=', currentLevel.step, 'sequence:', sequence);
+    }
+
+    // ==================== BUILD GRID (unit grouping visualization) ====================
+    function buildGrid() {
+      const grid = document.getElementById('game-grid');
+      if (!grid || !currentLevel) return;
+
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `repeat(${currentLevel.cols}, 1fr)`;
+
+      shuffledSequence.forEach((num, index) => {
+        const cell = document.createElement('div');
+        cell.className = `cell`;
+        cell.style.color = currentLevel.color;
+        cell.textContent = num;
+        cell.dataset.index = index;
+        cell.dataset.value = num;
+
+        // Strong unit grouping visualization (background tint for small cells)
+        if (currentLevel.step === 10 || currentLevel.step === 5) {
+          const offset = (num - currentLevel.start) % currentLevel.step;
+          if (offset === 0) {
+            cell.style.background = `${currentLevel.color}10`;
+            cell.style.borderColor = `${currentLevel.color}50`;
+          }
+        } else if (currentLevel.step === 1 && currentLevel.start >= 10) {
+          if (num % 10 === 0) {
+            cell.style.background = `${currentLevel.color}10`;
+            cell.style.borderColor = `${currentLevel.color}50`;
+          }
+        }
+
+        cell.addEventListener('click', () => handleCellClick(cell, num, index));
+        grid.appendChild(cell);
+      });
+    }
+
+    // ==================== HANDLE CLICK (Guided Discovery) ====================
+    function handleCellClick(cell, num, index) {
+      if (foundCount >= sequence.length || cell.classList.contains('found')) return;
+
+      const expected = sequence[foundCount];
+
+      if (num === expected) {
+        cell.classList.add('found');
+        cell.style.boxShadow = 'none';
+
+        foundCount++;
+
+        // Update target
+        const targetEl = document.getElementById('target-number');
+        if (foundCount < sequence.length) {
+          targetEl.textContent = sequence[foundCount];
+        } else {
+          targetEl.textContent = '✓';
+        }
+
+        // Progressive rule discovery hint (after 2+ correct)
+        const hintEl = document.getElementById('rule-hint');
+        if (foundCount >= 2 && hintEl.classList.contains('hidden')) {
+          const message = currentLevel.step === 1 
+            ? '1씩 커지는 규칙을 발견했어요!' 
+            : `${currentLevel.step}씩 뛰는 규칙을 발견했어요!`;
+          hintEl.textContent = message;
+          hintEl.classList.remove('hidden');
+          const badge = document.getElementById('discovery-badge');
+          if (badge) badge.classList.remove('hidden');
+        }
+
+        // Win
+        if (foundCount === sequence.length) {
+          setTimeout(() => {
+            const modal = document.getElementById('celebration-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+          }, 380);
+        }
+      } else {
+        // Gentle wrong feedback
+        cell.style.transform = 'scale(0.88)';
+        cell.style.background = '#fee2e2';
+        setTimeout(() => {
+          if (cell && !cell.classList.contains('found')) {
+            cell.style.transform = 'scale(1)';
+            cell.style.background = 'white';
+          }
+        }, 160);
+      }
+    }
+
+    function showHint() {
+      if (!currentLevel) return;
+      const msg = `힌트: ${currentLevel.step}씩 ${currentLevel.step === 1 ? '커지는' : '뛰는'} 패턴을 찾아보세요!`;
+      alert(msg);
+    }
+
+    function hideCelebration() {
+      const modal = document.getElementById('celebration-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function nextLevelOrReplay() {
+      hideCelebration();
+      exitToMenu();
+    }
+
+    function exitToMenu() {
+      // Hide any open modals first
+      const modal = document.getElementById('celebration-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+      
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+      
+      // Full reset
+      currentLevel = null;
+      sequence = [];
+      shuffledSequence = [];
+      foundCount = 0;
+      const pEl = document.getElementById('progress');
+      if (pEl) pEl.textContent = '0 / 0';
+      
+      renderLevelSelection();
+    }
+
+    // ==================== INIT ====================
+    function init() {
+      console.log('[Game] Initializing kids number sequence game v3.2 (robust)');
+
+      const startScreen = document.getElementById('start-screen');
+      const gameScreen = document.getElementById('game-screen');
+
+      if (!startScreen || !gameScreen) {
+        console.error('Critical: screen containers missing');
+        return;
+      }
+
+      renderLevelSelection();
+      gameScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+
+      // Global safety
+      window.addEventListener('error', (e) => console.error('[Game Error]', e.message));
+
+      console.log('[Game] Ready — level selection displayed.');
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
