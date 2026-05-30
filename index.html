@@ -176,9 +176,9 @@
       </div>
 
       <!-- 무료 콘텐츠 안내 배너 -->
-      <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-3xl text-center">
-        <div class="text-emerald-700 font-bold text-sm">✅ Phase 1 ~ Phase 4까지 모두 무료</div>
-        <div class="text-emerald-600 text-xs mt-1">지금 바로 모든 콘텐츠를 자유롭게 이용하세요</div>
+      <div class="mb-4 p-4 bg-emerald-50 border-2 border-emerald-300 rounded-3xl text-center">
+        <div class="text-emerald-700 font-extrabold text-base">✅ Phase 1 ~ Phase 4까지 모두 무료 (v1.0 출시)</div>
+        <div class="text-emerald-600 text-xs mt-1 font-medium">22개 트랙 · 한국어/영어 음성 · 별 시스템 전부 공짜로 이용하세요</div>
       </div>
 
       <!-- Level Selection -->
@@ -187,7 +187,22 @@
       </div>
 
       <div class="mt-auto pt-5 text-center">
-        <div class="text-[10px] text-slate-400">눈으로 보고, 소리로 들으며 규칙을 발견해요 • 모든 콘텐츠 무료 제공</div>
+        <div class="text-[10px] text-slate-400">눈으로 보고, 소리로 들으며 규칙을 발견해요 • Phase 1~4 완전 무료</div>
+      </div>
+
+      <!-- 성장 & 프리미엄 유도 버튼 -->
+      <div class="mt-6 grid grid-cols-2 gap-3">
+        <button onclick="showShareCard()" 
+                class="py-3 rounded-3xl bg-white border border-emerald-200 text-emerald-700 font-bold text-sm active:bg-emerald-50">
+          📤 공유 카드 만들기
+        </button>
+        <button onclick="showParentReport()" 
+                class="py-3 rounded-3xl bg-white border border-blue-200 text-blue-700 font-bold text-sm active:bg-blue-50">
+          📊 부모 리포트 보기
+        </button>
+      </div>
+      <div class="text-center mt-2">
+        <span class="text-[10px] text-emerald-600 font-medium">자랑하고 싶은 성장 카드 + 부모 리포트 (프리미엄으로 더 강력해집니다)</span>
       </div>
     </div>
   </div>
@@ -284,10 +299,21 @@
     let gameActive = false;
     let currentTrackId = null;        // "더 할래요" 시 같은 단계 계속하기 위해 저장
 
-    // ==================== 진행도 시스템 (localStorage 기반) ====================
+    // ==================== 진행도 시스템 (localStorage 기반, v2 확장 준비) ====================
     function getProgress() {
       try {
-        return JSON.parse(localStorage.getItem('kids_number_progress') || '{}');
+        const raw = JSON.parse(localStorage.getItem('kids_number_progress') || '{}');
+        // v1 호환: 단순 숫자 → v2 객체로 자동 업그레이드
+        const upgraded = {};
+        Object.keys(raw).forEach(key => {
+          const val = raw[key];
+          if (typeof val === 'number') {
+            upgraded[key] = { stars: val, lastPlayed: null, playCount: 1 };
+          } else {
+            upgraded[key] = val;
+          }
+        });
+        return upgraded;
       } catch (e) {
         return {};
       }
@@ -295,20 +321,369 @@
 
     function saveProgress(trackId, stars) {
       const progress = getProgress();
-      const currentStars = progress[trackId] || 0;
-      progress[trackId] = Math.max(currentStars, stars); // 더 높은 별점으로 업데이트
+      const current = progress[trackId] || { stars: 0, playCount: 0 };
+      const newStars = Math.max(current.stars || 0, stars);
+      progress[trackId] = {
+        stars: newStars,
+        lastPlayed: new Date().toISOString().slice(0, 10),
+        playCount: (current.playCount || 0) + 1
+      };
       localStorage.setItem('kids_number_progress', JSON.stringify(progress));
     }
 
     function getStarsForTrack(trackId) {
       const progress = getProgress();
-      return progress[trackId] || 0;
+      return (progress[trackId] && progress[trackId].stars) || 0;
     }
 
     function getStarDisplay(trackId) {
       const stars = getStarsForTrack(trackId);
       if (stars === 0) return '<span class="text-slate-300 text-xs">☆☆☆</span>';
       return '<span class="text-amber-400 text-xs">' + '★'.repeat(stars) + '</span>' + '<span class="text-slate-300 text-xs">' + '☆'.repeat(3 - stars) + '</span>';
+    }
+
+    function getProgressSummary() {
+      const progress = getProgress();
+      const entries = Object.keys(progress);
+      const totalStars = entries.reduce((sum, k) => sum + (progress[k].stars || 0), 0);
+      const completed = entries.length;
+      // Phase별 집계 (간단 버전)
+      const phaseMap = {
+        1: ['1-A','1-B','1-C'],
+        2: ['2-A','2-B','2-C','2-D'],
+        3: ['3-2','3-3','3-4','3-5','3-6','3-7','3-8','3-9','3-10'],
+        4: ['4-A','4-B','4-C','4-D','4-E','4-F']
+      };
+      const phaseStats = {};
+      Object.keys(phaseMap).forEach(p => {
+        const tracks = phaseMap[p];
+        let pStars = 0, pDone = 0;
+        tracks.forEach(t => {
+          if (progress[t]) {
+            pStars += progress[t].stars || 0;
+            pDone++;
+          }
+        });
+        phaseStats[p] = { done: pDone, total: tracks.length, stars: pStars };
+      });
+      return { totalStars, completed, totalTracks: 22, phaseStats, progress };
+    }
+
+    // ==================== 성장 기능: 공유 카드 & 부모 리포트 (프리미엄 스펙 기반 고도화 티저) ====================
+    function showShareCard() {
+      const { totalStars, completed, totalTracks, phaseStats } = getProgressSummary();
+      const progress = getProgressSummary().progress;
+
+      // 아이 이름 (선택, localStorage 유지)
+      let childName = localStorage.getItem('kids_number_child_name') || '';
+      if (!childName) {
+        const input = prompt('우리 아이 이름을 알려주세요 (선택, 카드에 표시됩니다)', '');
+        if (input && input.trim()) {
+          childName = input.trim();
+          localStorage.setItem('kids_number_child_name', childName);
+        } else {
+          childName = '우리 아이';
+        }
+      }
+
+      // 고해상도 캔버스 (Instagram 최적 1080x1080 기준 축소 렌더)
+      const canvas = document.createElement('canvas');
+      const scale = 2;
+      canvas.width = 1080 * scale;
+      canvas.height = 1080 * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      // 배경 그라데이션
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 1080);
+      bgGrad.addColorStop(0, '#fff7ed');
+      bgGrad.addColorStop(1, '#fefce8');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1080, 1080);
+
+      // 상단 장식 별들 (반투명)
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+      for (let i = 0; i < 8; i++) {
+        const x = 80 + (i % 4) * 240;
+        const y = 60 + Math.floor(i / 4) * 80;
+        ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // 헤더
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 52px system-ui, sans-serif';
+      ctx.fillText('🌟 숫자 순서대로!', 80, 120);
+
+      ctx.fillStyle = '#854d0e';
+      ctx.font = '700 34px system-ui, sans-serif';
+      ctx.fillText('우리 아이 수 개념 성장 카드', 80, 170);
+
+      // 아이 이름 + 날짜
+      const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+      ctx.fillStyle = '#64748b';
+      ctx.font = '600 28px system-ui, sans-serif';
+      ctx.fillText(`${childName}  ·  ${today}`, 80, 215);
+
+      // 메인 하이라이트 박스
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 8;
+      ctx.roundRect(70, 250, 940, 220, 40);
+      ctx.fill();
+      ctx.stroke();
+
+      // 총 별
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 110px system-ui, sans-serif';
+      ctx.fillText(`${totalStars}★`, 110, 365);
+
+      ctx.fillStyle = '#166534';
+      ctx.font = '700 36px system-ui, sans-serif';
+      ctx.fillText(`${completed}개 트랙 완료  /  ${totalTracks}개 중`, 110, 420);
+
+      const percent = Math.round((completed / totalTracks) * 100);
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '700 42px system-ui, sans-serif';
+      ctx.fillText(`${percent}%`, 780, 365);
+
+      // Phase 2x2 그리드
+      const phaseInfo = [
+        { id: 1, emoji: '🐣', name: 'Phase 1', label: '순서 감각', color: '#10b981' },
+        { id: 2, emoji: '🦊', name: 'Phase 2', label: '10의 자리 직관', color: '#0ea5e9' },
+        { id: 3, emoji: '⭐', name: 'Phase 3', label: '패턴 발견', color: '#f59e0b' },
+        { id: 4, emoji: '🚀', name: 'Phase 4', label: '큰 수 감각', color: '#f43f5e' }
+      ];
+
+      phaseInfo.forEach((p, idx) => {
+        const col = idx % 2;
+        const row = Math.floor(idx / 2);
+        const x = 70 + col * 480;
+        const y = 510 + row * 230;
+
+        // 카드 배경
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 6;
+        ctx.roundRect(x, y, 450, 200, 28);
+        ctx.fill();
+        ctx.stroke();
+
+        // Phase 헤더
+        ctx.fillStyle = p.color;
+        ctx.font = 'bold 32px system-ui, sans-serif';
+        ctx.fillText(`${p.emoji} ${p.name}`, x + 24, y + 48);
+
+        ctx.fillStyle = '#475569';
+        ctx.font = '600 24px system-ui, sans-serif';
+        ctx.fillText(p.label, x + 24, y + 82);
+
+        // 별 시각화 + 완료 수
+        const stat = phaseStats[p.id] || { done: 0, total: 3, stars: 0 };
+        const starText = '★'.repeat(Math.min(3, Math.floor(stat.stars / Math.max(1, stat.total)))) || '☆';
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 42px system-ui, sans-serif';
+        ctx.fillText(starText, x + 24, y + 140);
+
+        ctx.fillStyle = '#334155';
+        ctx.font = '700 26px system-ui, sans-serif';
+        ctx.fillText(`${stat.done}/${stat.total} 트랙`, x + 220, y + 140);
+
+        // 진행률 바
+        const barW = 380;
+        const pct = stat.total > 0 ? stat.done / stat.total : 0;
+        ctx.fillStyle = '#e2e8f0';
+        ctx.roundRect(x + 24, y + 160, barW, 18, 9);
+        ctx.fillStyle = p.color;
+        ctx.roundRect(x + 24, y + 160, barW * pct, 18, 9);
+        ctx.fill();
+      });
+
+      // 하단 메시지
+      ctx.fillStyle = '#854d0e';
+      ctx.font = '700 28px system-ui, sans-serif';
+      ctx.fillText('규칙을 스스로 발견하는 즐거운 경험을 함께해요!', 80, 1000);
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '600 22px system-ui, sans-serif';
+      ctx.fillText('https://noivan0.github.io/kids-number-sequence/', 80, 1040);
+
+      // 다운로드 + 공유
+      const dataUrl = canvas.toDataURL('image/png');
+
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-3xl max-w-[420px] w-full p-5" onclick="event.stopImmediatePropagation()">
+          <div class="flex justify-between items-center mb-4 px-1">
+            <div class="font-black text-2xl">📤 성장 카드 완성!</div>
+            <button class="text-3xl leading-none text-slate-400" onclick="this.closest('.fixed').remove()">×</button>
+          </div>
+          
+          <img src="${dataUrl}" class="w-full rounded-2xl border shadow mb-4" style="max-height: 380px; object-fit: contain;">
+          
+          <div class="grid grid-cols-2 gap-3">
+            <button id="share-btn" 
+                    class="py-4 rounded-3xl bg-emerald-600 text-white font-bold text-lg active:bg-emerald-700">
+              📱 공유하기
+            </button>
+            <button id="download-btn"
+                    class="py-4 rounded-3xl bg-white border-2 border-emerald-600 text-emerald-700 font-bold text-lg active:bg-emerald-50">
+              💾 이미지 저장
+            </button>
+          </div>
+          
+          <div class="text-center mt-3">
+            <span class="text-xs text-slate-400">인스타·카톡에 자랑해보세요! (완전 무료)</span>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // 공유 버튼 (Web Share API 우선)
+      modal.querySelector('#share-btn').onclick = async () => {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], `${childName}_성장카드.png`, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: '우리 아이 성장 카드', text: `${childName}의 수 개념 성장 기록 🌟` });
+          } else {
+            throw new Error('share not supported');
+          }
+        } catch (e) {
+          // fallback: 다운로드
+          const a = document.createElement('a');
+          a.download = `${childName}_성장카드.png`;
+          a.href = dataUrl;
+          a.click();
+        }
+        modal.remove();
+      };
+
+      modal.querySelector('#download-btn').onclick = () => {
+        const a = document.createElement('a');
+        a.download = `${childName}_성장카드.png`;
+        a.href = dataUrl;
+        a.click();
+        modal.remove();
+      };
+    }
+
+    function showParentReport() {
+      const { totalStars, completed, totalTracks, phaseStats, progress } = getProgressSummary();
+
+      // 간단 인사이트 생성 (스펙 기반)
+      const insights = [];
+      const weakPhases = [];
+      Object.keys(phaseStats).forEach(pid => {
+        const s = phaseStats[pid];
+        if (s.done < s.total * 0.6) weakPhases.push(`Phase ${pid}`);
+      });
+      if (weakPhases.length > 0) {
+        insights.push(`도전 중인 영역: ${weakPhases.join(', ')} — 이 Phase를 다시 해보면 좋아요.`);
+      }
+      if (totalStars < completed * 2) {
+        insights.push('별 3개를 받은 트랙이 아직 적어요. 한 트랙을 여러 번 도전해보세요!');
+      }
+      if (completed >= 15) {
+        insights.push('훌륭합니다! 대부분의 기본 단위 개념을 잘 익히고 있어요.');
+      }
+      if (insights.length === 0) {
+        insights.push('꾸준히 플레이하고 있어요. Phase 3 패턴 발견이 특히 중요합니다.');
+      }
+
+      // Phase 상세 HTML
+      let phaseHtml = '';
+      const phaseMeta = {
+        1: { emoji: '🐣', name: '순서 감각', color: '#10b981' },
+        2: { emoji: '🦊', name: '10의 자리 직관', color: '#0ea5e9' },
+        3: { emoji: '⭐', name: '패턴 발견', color: '#f59e0b' },
+        4: { emoji: '🚀', name: '큰 수 감각', color: '#f43f5e' }
+      };
+      Object.keys(phaseStats).forEach(pid => {
+        const s = phaseStats[pid];
+        const m = phaseMeta[pid];
+        const pct = Math.round((s.done / s.total) * 100);
+        phaseHtml += `
+          <div class="flex items-center justify-between bg-white border rounded-2xl px-4 py-3 mb-2" style="border-color:${m.color}40">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">${m.emoji}</span>
+              <div>
+                <div class="font-bold" style="color:${m.color}">Phase ${pid}. ${m.name}</div>
+                <div class="text-xs text-slate-500">${s.done}/${s.total} 트랙 완료</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-black" style="color:#fbbf24">${'★'.repeat(Math.floor(s.stars / Math.max(1,s.total)))}</div>
+              <div class="text-xs text-emerald-600 font-bold">${pct}%</div>
+            </div>
+          </div>
+        `;
+      });
+
+      const html = `
+        <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-3" onclick="this.remove()">
+          <div class="bg-[#fff7ed] max-w-[400px] w-full mx-auto rounded-3xl overflow-hidden shadow-xl" onclick="event.stopImmediatePropagation()">
+            <!-- 헤더 -->
+            <div class="bg-white px-5 py-4 flex items-center justify-between border-b">
+              <div>
+                <div class="text-2xl font-black text-slate-800">📊 부모 리포트</div>
+                <div class="text-xs text-emerald-600 font-bold">베타 · 로컬 데이터 기반</div>
+              </div>
+              <button onclick="this.closest('.fixed').remove()" class="text-3xl text-slate-400 leading-none">×</button>
+            </div>
+
+            <div class="p-5 space-y-5 max-h-[78vh] overflow-auto">
+              <!-- Overview -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-emerald-100 rounded-3xl p-4">
+                  <div class="text-emerald-700 text-sm font-bold">총 별 개수</div>
+                  <div class="text-5xl font-black text-emerald-700 mt-1">${totalStars}<span class="text-3xl">★</span></div>
+                </div>
+                <div class="bg-amber-100 rounded-3xl p-4">
+                  <div class="text-amber-700 text-sm font-bold">완료 트랙</div>
+                  <div class="text-5xl font-black text-amber-700 mt-1">${completed}<span class="text-3xl">/22</span></div>
+                  <div class="text-xs text-amber-600 mt-0.5">${Math.round(completed/22*100)}% 진행</div>
+                </div>
+              </div>
+
+              <!-- Phase Mastery -->
+              <div>
+                <div class="font-bold text-lg mb-2 px-1">Phase별 마스터리</div>
+                ${phaseHtml}
+              </div>
+
+              <!-- 인사이트 -->
+              <div class="bg-white rounded-3xl p-4 border border-blue-100">
+                <div class="font-bold text-blue-700 mb-2 flex items-center gap-2">💡 AI 인사이트 (미리보기)</div>
+                <ul class="text-sm text-slate-700 space-y-1.5">
+                  ${insights.map(i => `<li class="pl-1">• ${i}</li>`).join('')}
+                </ul>
+                <div class="mt-3 text-[10px] text-blue-500 font-medium">※ 더 정확한 약점 분석·추천 활동·PDF 내보내기는 프리미엄에서 제공됩니다.</div>
+              </div>
+
+              <!-- 다음 목표 -->
+              <div class="bg-white rounded-3xl p-4">
+                <div class="font-bold mb-2">🎯 추천 다음 목표</div>
+                <div class="text-sm text-slate-600">별이 낮은 트랙을 1~2개 골라 집중해보세요. 10 단위와 큰 수(Phase 2·4)가 특히 중요합니다.</div>
+              </div>
+            </div>
+
+            <!-- 하단 액션 -->
+            <div class="p-5 pt-0 grid grid-cols-2 gap-3 bg-[#fff7ed]">
+              <button onclick="this.closest('.fixed').remove(); showShareCard();" 
+                      class="py-3.5 rounded-3xl bg-white border border-emerald-300 text-emerald-700 font-bold active:bg-emerald-50 text-sm">
+                📤 성장 카드 만들기
+              </button>
+              <button onclick="alert('PDF 내보내기와 상세 리포트는 프리미엄 출시 후 제공됩니다. 지금은 로컬 데이터로 기본 분석만 가능해요!');" 
+                      class="py-3.5 rounded-3xl bg-blue-600 text-white font-bold active:bg-blue-700 text-sm">
+                📄 PDF로 저장 (프리미엄)
+              </button>
+            </div>
+            <div class="text-center pb-4 text-[10px] text-slate-400 bg-[#fff7ed]">모든 데이터는 기기에만 저장됩니다 (프라이버시 보호)</div>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', html);
     }
 
     // ==================== 언어 선택 (메인 화면) ====================
@@ -772,6 +1147,7 @@
         `;
 
         phase.tracks.forEach(track => {
+          const isFree = true; // Phase 1~4 모두 무료
           html += `
             <button data-track="${track.id}"
               class="level-card w-full bg-white border-[5px] rounded-3xl px-5 py-4 text-left soft-shadow active:scale-[0.985]"
@@ -784,6 +1160,7 @@
                 <div class="text-right">
                   <div class="text-xs font-mono px-2.5 py-px rounded-xl bg-white/80" style="color:${track.color}aa">${track.range}</div>
                   <div class="text-[10px] text-slate-400 mt-1">${track.step}씩</div>
+                  ${isFree ? `<div class="mt-1"><span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">무료</span></div>` : ''}
                   <!-- 별 표시 -->
                   <div class="mt-1 text-right">${getStarDisplay(track.id)}</div>
                 </div>

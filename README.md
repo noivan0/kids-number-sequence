@@ -6,6 +6,8 @@
 
 **[🚀 바로 플레이하기](https://noivan0.github.io/kids-number-sequence/)**
 
+> **2026년 5월 v1.0 업데이트**: Phase 1~4 **완전 무료** 정식 배포 완료. 공유카드·부모리포트 티저 UI 대폭 강화.
+
 ---
 
 ## ✨ 특징
@@ -30,7 +32,7 @@ https://noivan0.github.io/kids-number-sequence/
 
 ---
 
-## 🎮 게임 구성 (Phase + Track) — 현재 모두 무료
+## 🎮 게임 구성 (Phase + Track) — **Phase 1~4까지 모두 완전 무료**
 
 | Phase | 이름             | 주요 학습 내용                     | 트랙 수 |
 |-------|------------------|------------------------------------|---------|
@@ -38,6 +40,8 @@ https://noivan0.github.io/kids-number-sequence/
 | 2     | 10의 자리 직관   | 10이 특별한 단위라는 것을 인지       | 4       |
 | 3     | 패턴 발견        | 2~10씩 다양한 간격으로 규칙 발견     | 9       |
 | 4     | 큰 수 감각       | 100~10000 단위의 크기와 규칙 이해   | 6       |
+
+**총 22개 트랙 전부 무료** (2026년 5월 v1.0 기준)
 
 ---
 
@@ -67,11 +71,12 @@ python3 -m http.server 5500
 
 ```
 kids-number-sequence/
-├── index.html          # 게임 전체 (단일 파일, 480줄)
-├── manifest.json       # PWA 설정
+├── index.html                  # 게임 전체 (단일 파일 PWA)
+├── manifest.json               # PWA 설정
 ├── README.md
-├── DESIGN.md           # UI 디자인 가이드
-└── GAME_DESIGN.md      # 교육 설계 문서 (상세)
+├── PREMIUM_STRATEGY_SPEC.md    # ★ 프리미엄 상세 스펙 + 전체 전략 (최신)
+├── DESIGN.md                   # UI 디자인 가이드
+└── GAME_DESIGN.md              # 교육 설계 문서 (상세)
 ```
 
 ---
@@ -142,7 +147,21 @@ kids-number-sequence/
 
 ---
 
-자세한 시장 조사 데이터와 구체적인 마케팅 실행 계획이 필요하시면 추가로 정리해 드리겠습니다.
+## 📋 상세 전략 & 프리미엄 스펙 문서
+
+**`PREMIUM_STRATEGY_SPEC.md`** 파일에 다음 내용이 모두 구체적으로 정리되어 있습니다:
+
+- 공유카드 상세 UI/UX 스펙 + 구현 가이드
+- 부모 리포트 (인사이트, 약점 진단, 추천 활동) 상세 설계
+- 마케팅 채널별 실행 체크리스트 (맘카페·인스타·B2B 등 구체 카피 + KPI)
+- 가격 정책 (개인/연간/라이프타임/B2B) 최종안
+- 전환 퍼널, B2B 플레이북, 단계별 로드맵, KPI, 리스크 대응
+
+이 문서를 기준으로 실제 개발과 마케팅을 진행합니다. (Living Document)
+
+---
+
+자세한 시장 조사 데이터와 구체적인 마케팅 실행 계획은 `PREMIUM_STRATEGY_SPEC.md`를 참조하세요.
 
 ---
 
