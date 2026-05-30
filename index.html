@@ -179,6 +179,74 @@
   </div>
 
   <script>
+    // ==================== SOUND EFFECTS ====================
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!audioContext) {
+        try { audioContext = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+      }
+      return audioContext;
+    }
+
+    function playCorrectSound() {
+      const ctx = getAudioContext(); if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      filter.type = "lowpass";
+      filter.frequency.value = 2000;
+      gain.gain.value = 0.3;
+      const t = ctx.currentTime;
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.linearRampToValueAtTime(1320, t + 0.12);
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.linearRampToValueAtTime(0.001, t + 0.18);
+      const noise = ctx.createOscillator(); noise.type = "square"; noise.frequency.value = 1200;
+      const noiseGain = ctx.createGain(); noiseGain.gain.value = 0.08;
+      noiseGain.gain.linearRampToValueAtTime(0.001, t + 0.15);
+      const connect = ctx.createGain();
+      osc.connect(filter); filter.connect(gain);
+      noise.connect(noiseGain); noiseGain.connect(connect);
+      gain.connect(connect); connect.connect(ctx.destination);
+      osc.start(t); noise.start(t);
+      osc.stop(t + 0.25); noise.stop(t + 0.25);
+    }
+
+    function playWrongSound() {
+      const ctx = getAudioContext(); if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.value = 220;
+      gain.gain.value = 0.25;
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.linearRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.3);
+    }
+
+    function playVictorySound() {
+      const ctx = getAudioContext(); if (!ctx) return;
+      const notes = [523, 659, 784, 1046];
+      notes.forEach((freq, i) => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          gain.gain.value = 0.35;
+          const t = ctx.currentTime;
+          gain.gain.setValueAtTime(0.35, t);
+          gain.gain.linearRampToValueAtTime(0.001, t + 0.4);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(t); osc.stop(t + 0.45);
+        }, i * 90);
+      });
+    }
     // ==================== GAME DATA (v3.1 Phase + Track) ====================
     const GAME_DATA = {
       phases: [
@@ -284,6 +352,44 @@
     }
 
     // ==================== START LEVEL (defensive) ====================
+    // ==================== DYNAMIC LEVEL GENERATOR (다양한 문제 생성) ====================
+    function generateDynamicLevel(track) {
+      const t = {...track}; // 복사
+
+      if (track.id.startsWith("1-")) {
+        // Phase 1: 순서 감각 - 다양한 시작점과 길이
+        t.start = Math.floor(Math.random() * 25) + 1;
+        t.count = 6 + Math.floor(Math.random() * 4); // 6~9개
+        t.cols = t.count <= 6 ? 2 : 3;
+      } 
+      else if (track.id.startsWith("2-")) {
+        // Phase 2: 패턴 발견 - step 배수 근처에서 랜덤 시작
+        const multiplier = Math.floor(Math.random() * 9) + 2;
+        t.start = track.step * multiplier;
+        t.count = 7 + Math.floor(Math.random() * 3); // 7~9개
+        t.cols = 3;
+      } 
+      else if (track.id.startsWith("3-")) {
+        // Phase 3: 10의 자리 직관
+        const base = 10 + Math.floor(Math.random() * 15);
+        t.start = Math.max(10, Math.floor(base / 10) * 10);
+        t.count = 7 + Math.floor(Math.random() * 3);
+        t.cols = 3;
+      } 
+      else if (track.id.startsWith("4-")) {
+        // Phase 4: 큰 수
+        t.start = 100 + Math.floor(Math.random() * 150);
+        t.count = 6 + Math.floor(Math.random() * 3);
+        t.cols = 3;
+      }
+
+      // range 문자열도 동적으로 업데이트
+      const end = t.start + (t.count - 1) * t.step;
+      t.range = `${t.start}~${end}`;
+
+      return t;
+    }
+
     function startLevel(trackId) {
       let foundTrack = null;
       
@@ -299,7 +405,7 @@
       }
 
       // Full reset
-      currentLevel = foundTrack;
+      currentLevel = generateDynamicLevel(foundTrack);
       sequence = [];
       foundCount = 0;
       shuffledSequence = [];
@@ -385,6 +491,7 @@
       const expected = sequence[foundCount];
 
       if (num === expected) {
+        playCorrectSound();
         cell.classList.add('found');
         cell.style.boxShadow = 'none';
 
@@ -416,10 +523,12 @@
             const modal = document.getElementById('celebration-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            playVictorySound();
           }, 380);
         }
       } else {
         // Gentle wrong feedback
+        playWrongSound();
         cell.style.transform = 'scale(0.88)';
         cell.style.background = '#fee2e2';
         setTimeout(() => {
