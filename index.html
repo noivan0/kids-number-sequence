@@ -175,10 +175,9 @@
         <div id="lang-status" class="text-center mt-2 text-xs font-medium text-slate-500"></div>
       </div>
 
-      <!-- 무료 콘텐츠 안내 배너 -->
-      <div class="mb-4 p-4 bg-emerald-50 border-2 border-emerald-300 rounded-3xl text-center">
-        <div class="text-emerald-700 font-extrabold text-base">✅ Phase 1 ~ Phase 4까지 모두 무료 (v1.0 출시)</div>
-        <div class="text-emerald-600 text-xs mt-1 font-medium">22개 트랙 · 한국어/영어 음성 · 별 시스템 전부 공짜로 이용하세요</div>
+      <!-- 간단 안내 배너 (광고성 문구 최소화) -->
+      <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-3xl text-center">
+        <div class="text-amber-700 font-semibold text-sm">3~7세 아이가 스스로 규칙을 발견하는 수 개념 게임</div>
       </div>
 
       <!-- Level Selection -->
@@ -187,7 +186,7 @@
       </div>
 
       <div class="mt-auto pt-5 text-center">
-        <div class="text-[10px] text-slate-400">눈으로 보고, 소리로 들으며 규칙을 발견해요 • Phase 1~4 완전 무료</div>
+        <div class="text-[10px] text-slate-400">눈으로 보고, 소리로 들으며 규칙을 발견해요</div>
       </div>
 
       <!-- 성장 & 프리미엄 유도 버튼 -->
@@ -202,7 +201,7 @@
         </button>
       </div>
       <div class="text-center mt-2">
-        <span class="text-[10px] text-emerald-600 font-medium">자랑하고 싶은 성장 카드 + 부모 리포트 (프리미엄으로 더 강력해집니다)</span>
+        <span class="text-[10px] text-slate-400">성장 기록을 카드로 만들고 리포트로 확인해보세요</span>
       </div>
     </div>
   </div>
@@ -477,16 +476,24 @@
         ctx.font = '600 24px system-ui, sans-serif';
         ctx.fillText(p.label, x + 24, y + 82);
 
-        // 별 시각화 + 완료 수
+        // 별 시각화 개선: 평균 별 (더 직관적으로) + 완료 트랙 강조
         const stat = phaseStats[p.id] || { done: 0, total: 3, stars: 0 };
-        const starText = '★'.repeat(Math.min(3, Math.floor(stat.stars / Math.max(1, stat.total)))) || '☆';
+        const avgStars = stat.total > 0 ? (stat.stars / stat.total) : 0;
+        const filledStars = Math.max(0, Math.min(3, Math.round(avgStars)));
+        const starText = '★'.repeat(filledStars) + '☆'.repeat(3 - filledStars);
+        
         ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 42px system-ui, sans-serif';
-        ctx.fillText(starText, x + 24, y + 140);
+        ctx.font = 'bold 38px system-ui, sans-serif';
+        ctx.fillText(starText, x + 24, y + 138);
 
         ctx.fillStyle = '#334155';
-        ctx.font = '700 26px system-ui, sans-serif';
-        ctx.fillText(`${stat.done}/${stat.total} 트랙`, x + 220, y + 140);
+        ctx.font = '700 24px system-ui, sans-serif';
+        ctx.fillText(`${stat.done}/${stat.total} 완료`, x + 200, y + 138);
+
+        // 평균 별 작은 표시
+        ctx.fillStyle = '#64748b';
+        ctx.font = '500 18px system-ui, sans-serif';
+        ctx.fillText(`평균 ${avgStars.toFixed(1)}★`, x + 24, y + 168);
 
         // 진행률 바
         const barW = 380;
@@ -1147,7 +1154,6 @@
         `;
 
         phase.tracks.forEach(track => {
-          const isFree = true; // Phase 1~4 모두 무료
           html += `
             <button data-track="${track.id}"
               class="level-card w-full bg-white border-[5px] rounded-3xl px-5 py-4 text-left soft-shadow active:scale-[0.985]"
@@ -1160,7 +1166,6 @@
                 <div class="text-right">
                   <div class="text-xs font-mono px-2.5 py-px rounded-xl bg-white/80" style="color:${track.color}aa">${track.range}</div>
                   <div class="text-[10px] text-slate-400 mt-1">${track.step}씩</div>
-                  ${isFree ? `<div class="mt-1"><span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">무료</span></div>` : ''}
                   <!-- 별 표시 -->
                   <div class="mt-1 text-right">${getStarDisplay(track.id)}</div>
                 </div>
