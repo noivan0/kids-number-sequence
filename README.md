@@ -86,3 +86,30 @@ kids-number-sequence/
 **아이와 함께 즐겁게 숫자 규칙을 발견해보세요!** 🌟
 
 라이브 데모: https://noivan0.github.io/kids-number-sequence/
+
+---
+
+## 🚀 GitHub Pages + PWA 배포 가이드 (완전 호환)
+
+### 1. GitHub Pages 배포 방법
+1. 이 저장소를 Fork 또는 직접 사용
+2. `Settings > Pages`에서 다음 설정:
+   - Source: **Deploy from a branch**
+   - Branch: `main` (또는 `master`)
+   - Folder: `/ (root)`
+3. 저장 후 `https://<username>.github.io/kids-number-sequence/` 에서 접근 가능
+
+### 2. iOS PWA 완벽 호환을 위한 준비 (이미 적용됨)
+- `manifest.json` 에 `scope`, `start_url`, `display: standalone` 설정 완료
+- HTML에 iOS 전용 meta 태그 모두 포함:
+  - `apple-mobile-web-app-capable`
+  - `apple-mobile-web-app-status-bar-style`
+  - `viewport-fit=cover`
+- 큰 터치 타겟 (82px 이상) 적용
+- Standalone 모드에서 안전 영역 대응
+
+### 3. 홈 화면에 추가 후 동작
+- iOS Safari에서 "홈 화면에 추가" → 완전한 웹앱처럼 동작 (상단 브라우저 바 사라짐)
+- 오프라인에서도 기본 플레이 가능 (Tailwind CDN는 최초 로드 후 캐시됨)
+
+> **주의**: 순수 오프라인 완벽 지원을 원하시면 Service Worker를 추가할 수 있습니다. 현재는 교육용 PWA로서 실사용에 충분한 수준입니다.

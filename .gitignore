@@ -1,6 +1,9 @@
 # Broken backups
 index.html.broken.*
 
+# Versioned development backups
+index.html.v*
+
 # OS files
 .DS_Store
 Thumbs.db
