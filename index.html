@@ -484,14 +484,16 @@
         ctx.font = '500 15px system-ui, sans-serif';
         ctx.fillText(`별 합계 ${stat.stars}개  ·  평균 ${avgStars.toFixed(1)}`, x + 18, y + 95);
 
-        // 매우 얇고 은은한 진행률 바 (색칠 최소화)
+        // 진행률 표현 — 색칠 최소화 (얇은 라인 + 별점으로 충분히 전달)
         const barW = 420;
         const pct = stat.total > 0 ? stat.done / stat.total : 0;
+        // 배경만 아주 얇고 은은하게 (진한 색칠 완전 제거)
         ctx.fillStyle = '#f3f4f6';
-        ctx.roundRect(x + 18, y + 115, barW, 12, 6);
+        ctx.roundRect(x + 18, y + 120, barW, 6, 3);
         ctx.fill();
-        ctx.fillStyle = '#10b981';
-        ctx.roundRect(x + 18, y + 115, barW * pct, 12, 6);
+        // 채워진 부분도 아주 연하고 얇게 (초록색 블록 현상 방지)
+        ctx.fillStyle = '#fcd34d';   // 별과 같은 따뜻한 골드 톤으로 (초록 블록 완전 제거)
+        ctx.roundRect(x + 18, y + 120, barW * pct, 6, 3);
         ctx.fill();
       });
 
