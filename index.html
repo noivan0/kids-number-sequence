@@ -423,33 +423,33 @@
       ctx.font = '600 28px system-ui, sans-serif';
       ctx.fillText(`${childName}  ·  ${today}`, 80, 215);
 
-      // 메인 하이라이트 박스
+      // 메인 하이라이트 박스 (내용 축소에 맞춰 높이 줄임)
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 8;
-      ctx.roundRect(70, 250, 940, 220, 40);
+      ctx.roundRect(70, 250, 940, 195, 40);
       ctx.fill();
       ctx.stroke();
 
-      // 메인 통계 - 더 명확하고 정확하게
+      // 메인 통계 - 박스 축소에 맞춰 위치 조정
       ctx.fillStyle = '#166534';
-      ctx.font = '600 26px system-ui, sans-serif';
-      ctx.fillText('총 별 개수', 110, 290);
+      ctx.font = '600 24px system-ui, sans-serif';
+      ctx.fillText('총 별 개수', 110, 280);
 
       ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 92px system-ui, sans-serif';
-      ctx.fillText(`${totalStars}★`, 110, 370);
+      ctx.font = 'bold 82px system-ui, sans-serif';
+      ctx.fillText(`${totalStars}★`, 110, 348);
 
       ctx.fillStyle = '#334155';
-      ctx.font = '600 28px system-ui, sans-serif';
-      ctx.fillText(`${completed}개 트랙 완료`, 110, 410);
+      ctx.font = '600 26px system-ui, sans-serif';
+      ctx.fillText(`${completed}개 트랙 완료`, 110, 382);
 
       const percent = Math.round((completed / totalTracks) * 100);
       ctx.fillStyle = '#0ea5e9';
-      ctx.font = '700 32px system-ui, sans-serif';
-      ctx.fillText(`${percent}% 진행`, 110, 445);
+      ctx.font = '700 28px system-ui, sans-serif';
+      ctx.fillText(`${percent}% 진행`, 110, 412);
 
-      // Phase 2x2 그리드
+      // Phase 2x2 그리드 (간격과 위치 조정으로 겹침 방지)
       const phaseInfo = [
         { id: 1, emoji: '🐣', name: 'Phase 1', label: '순서 감각', color: '#10b981' },
         { id: 2, emoji: '🦊', name: 'Phase 2', label: '10의 자리 직관', color: '#0ea5e9' },
@@ -461,61 +461,62 @@
         const col = idx % 2;
         const row = Math.floor(idx / 2);
         const x = 70 + col * 480;
-        const y = 510 + row * 230;
+        const y = 495 + row * 215;   // 시작 위치와 행 간격 축소
 
         // 카드 배경
         ctx.fillStyle = '#ffffff';
         ctx.strokeStyle = p.color;
         ctx.lineWidth = 6;
-        ctx.roundRect(x, y, 450, 200, 28);
+        ctx.roundRect(x, y, 450, 195, 28);
         ctx.fill();
         ctx.stroke();
 
         // Phase 헤더
         ctx.fillStyle = p.color;
-        ctx.font = 'bold 32px system-ui, sans-serif';
-        ctx.fillText(`${p.emoji} ${p.name}`, x + 24, y + 48);
+        ctx.font = 'bold 30px system-ui, sans-serif';
+        ctx.fillText(`${p.emoji} ${p.name}`, x + 22, y + 42);
 
         ctx.fillStyle = '#475569';
-        ctx.font = '600 24px system-ui, sans-serif';
-        ctx.fillText(p.label, x + 24, y + 82);
+        ctx.font = '600 22px system-ui, sans-serif';
+        ctx.fillText(p.label, x + 22, y + 70);
 
-        // Phase별 정확한 수치 표시
+        // Phase별 수치 (겹침 완전 제거)
         const stat = phaseStats[p.id] || { done: 0, total: 3, stars: 0 };
         const avgStars = stat.total > 0 ? (stat.stars / stat.total) : 0;
         const filledStars = Math.max(0, Math.min(3, Math.round(avgStars)));
         const starText = '★'.repeat(filledStars) + '☆'.repeat(3 - filledStars);
         
         ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 36px system-ui, sans-serif';
-        ctx.fillText(starText, x + 24, y + 135);
+        ctx.font = 'bold 34px system-ui, sans-serif';
+        ctx.fillText(starText, x + 22, y + 108);
 
         ctx.fillStyle = '#334155';
-        ctx.font = '700 22px system-ui, sans-serif';
-        ctx.fillText(`${stat.done}/${stat.total} 트랙`, x + 180, y + 135);
+        ctx.font = '700 20px system-ui, sans-serif';
+        ctx.fillText(`${stat.done}/${stat.total} 트랙`, x + 170, y + 108);
 
         ctx.fillStyle = '#64748b';
-        ctx.font = '500 18px system-ui, sans-serif';
-        ctx.fillText(`별 합계 ${stat.stars} / 평균 ${avgStars.toFixed(1)}`, x + 24, y + 162);
+        ctx.font = '500 17px system-ui, sans-serif';
+        ctx.fillText(`별 합계 ${stat.stars}  ·  평균 ${avgStars.toFixed(1)}`, x + 22, y + 135);
 
-        // 진행률 바
+        // 진행률 바 — Phase 색상 대신 일관된 부드러운 색상 사용 (빨간색 블록 현상 방지)
         const barW = 380;
         const pct = stat.total > 0 ? stat.done / stat.total : 0;
         ctx.fillStyle = '#e2e8f0';
-        ctx.roundRect(x + 24, y + 160, barW, 18, 9);
-        ctx.fillStyle = p.color;
-        ctx.roundRect(x + 24, y + 160, barW * pct, 18, 9);
+        ctx.roundRect(x + 22, y + 148, barW, 16, 8);
+        ctx.fill();
+        ctx.fillStyle = '#10b981';   // 일관된 에메랄드 그린 (Phase 4의 빨간색이 채워져 보이는 문제 해결)
+        ctx.roundRect(x + 22, y + 148, barW * pct, 16, 8);
         ctx.fill();
       });
 
-      // 하단 메시지
+      // 하단 메시지 (간격 축소 반영)
       ctx.fillStyle = '#854d0e';
-      ctx.font = '700 28px system-ui, sans-serif';
-      ctx.fillText('규칙을 스스로 발견하는 즐거운 경험을 함께해요!', 80, 1000);
+      ctx.font = '700 26px system-ui, sans-serif';
+      ctx.fillText('규칙을 스스로 발견하는 즐거운 경험을 함께해요!', 80, 945);
 
       ctx.fillStyle = '#64748b';
-      ctx.font = '600 22px system-ui, sans-serif';
-      ctx.fillText('https://noivan0.github.io/kids-number-sequence/', 80, 1040);
+      ctx.font = '600 20px system-ui, sans-serif';
+      ctx.fillText('https://noivan0.github.io/kids-number-sequence/', 80, 980);
 
       // 다운로드 + 공유
       const dataUrl = canvas.toDataURL('image/png');
