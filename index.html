@@ -498,14 +498,14 @@
         ctx.font = '500 17px system-ui, sans-serif';
         ctx.fillText(`별 합계 ${stat.stars}  ·  평균 ${avgStars.toFixed(1)}`, x + 22, y + 135);
 
-        // 진행률 바 — Phase 색상 대신 일관된 부드러운 색상 사용 (빨간색 블록 현상 방지)
+        // 진행률 바 — 모든 Phase에 일관된 따뜻한 색상 사용 (별 테마와 조화)
         const barW = 380;
         const pct = stat.total > 0 ? stat.done / stat.total : 0;
         ctx.fillStyle = '#e2e8f0';
-        ctx.roundRect(x + 22, y + 148, barW, 16, 8);
+        ctx.roundRect(x + 22, y + 148, barW, 14, 7);  // 살짝 얇게
         ctx.fill();
-        ctx.fillStyle = '#10b981';   // 일관된 에메랄드 그린 (Phase 4의 빨간색이 채워져 보이는 문제 해결)
-        ctx.roundRect(x + 22, y + 148, barW * pct, 16, 8);
+        ctx.fillStyle = '#f59e0b';   // 따뜻한 골드 (별 색상과 동일 계열, 빨강 테두리와도 잘 어울림)
+        ctx.roundRect(x + 22, y + 148, barW * pct, 14, 7);
         ctx.fill();
       });
 
