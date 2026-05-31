@@ -30,7 +30,7 @@ class B2BProposalPDF(FPDF):
         self.set_font("Nanum", "", 11)
         self.set_text_color(100, 116, 139)
         self.set_xy(15, 25)
-        self.cell(0, 6, "3~7세 아이를 위한 수 개념 규칙 발견 게임 | 완전 무료 체험 제공", ln=True)
+        self.cell(0, 6, "5~7세 아이를 위한 수 개념 규칙 발견 게임 | 완전 무료 체험 제공", ln=True)
 
     def section_title(self, title, y):
         self.set_xy(15, y)
