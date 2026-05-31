@@ -6,8 +6,6 @@
 
 **[🚀 바로 플레이하기](https://noivan0.github.io/kids-number-sequence/)**
 
-> **2026년 5월 v1.0 업데이트**: Phase 1~4 **완전 무료** 정식 배포 완료. 공유카드·부모리포트 티저 UI 대폭 강화.
-
 ---
 
 ## ✨ 특징
@@ -32,7 +30,7 @@ https://noivan0.github.io/kids-number-sequence/
 
 ---
 
-## 🎮 게임 구성 (Phase + Track) — **Phase 1~4까지 모두 완전 무료**
+## 🎮 게임 구성 (Phase + Track)
 
 | Phase | 이름             | 주요 학습 내용                     | 트랙 수 |
 |-------|------------------|------------------------------------|---------|
@@ -41,7 +39,7 @@ https://noivan0.github.io/kids-number-sequence/
 | 3     | 패턴 발견        | 2~10씩 다양한 간격으로 규칙 발견     | 9       |
 | 4     | 큰 수 감각       | 100~10000 단위의 크기와 규칙 이해   | 6       |
 
-**총 22개 트랙 전부 무료** (2026년 5월 v1.0 기준)
+총 22개 트랙
 
 ---
 
@@ -75,7 +73,7 @@ kids-number-sequence/
 ├── manifest.json       # PWA 설정
 ├── README.md
 ├── DESIGN.md           # UI 디자인 가이드
-└── GAME_DESIGN.md      # 교육 설계 문서
+└── GAME_DESIGN.md      # 교육 설계 문서 (상세)
 ```
 
 ---
