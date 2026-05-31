@@ -431,19 +431,23 @@
       ctx.fill();
       ctx.stroke();
 
-      // 총 별
-      ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 110px system-ui, sans-serif';
-      ctx.fillText(`${totalStars}★`, 110, 365);
-
+      // 메인 통계 - 더 명확하고 정확하게
       ctx.fillStyle = '#166534';
-      ctx.font = '700 36px system-ui, sans-serif';
-      ctx.fillText(`${completed}개 트랙 완료  /  ${totalTracks}개 중`, 110, 420);
+      ctx.font = '600 26px system-ui, sans-serif';
+      ctx.fillText('총 별 개수', 110, 290);
+
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 92px system-ui, sans-serif';
+      ctx.fillText(`${totalStars}★`, 110, 370);
+
+      ctx.fillStyle = '#334155';
+      ctx.font = '600 28px system-ui, sans-serif';
+      ctx.fillText(`${completed}개 트랙 완료`, 110, 410);
 
       const percent = Math.round((completed / totalTracks) * 100);
-      ctx.fillStyle = '#4ade80';
-      ctx.font = '700 42px system-ui, sans-serif';
-      ctx.fillText(`${percent}%`, 780, 365);
+      ctx.fillStyle = '#0ea5e9';
+      ctx.font = '700 32px system-ui, sans-serif';
+      ctx.fillText(`${percent}% 진행`, 110, 445);
 
       // Phase 2x2 그리드
       const phaseInfo = [
@@ -476,24 +480,23 @@
         ctx.font = '600 24px system-ui, sans-serif';
         ctx.fillText(p.label, x + 24, y + 82);
 
-        // 별 시각화 개선: 평균 별 (더 직관적으로) + 완료 트랙 강조
+        // Phase별 정확한 수치 표시
         const stat = phaseStats[p.id] || { done: 0, total: 3, stars: 0 };
         const avgStars = stat.total > 0 ? (stat.stars / stat.total) : 0;
         const filledStars = Math.max(0, Math.min(3, Math.round(avgStars)));
         const starText = '★'.repeat(filledStars) + '☆'.repeat(3 - filledStars);
         
         ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 38px system-ui, sans-serif';
-        ctx.fillText(starText, x + 24, y + 138);
+        ctx.font = 'bold 36px system-ui, sans-serif';
+        ctx.fillText(starText, x + 24, y + 135);
 
         ctx.fillStyle = '#334155';
-        ctx.font = '700 24px system-ui, sans-serif';
-        ctx.fillText(`${stat.done}/${stat.total} 완료`, x + 200, y + 138);
+        ctx.font = '700 22px system-ui, sans-serif';
+        ctx.fillText(`${stat.done}/${stat.total} 트랙`, x + 180, y + 135);
 
-        // 평균 별 작은 표시
         ctx.fillStyle = '#64748b';
         ctx.font = '500 18px system-ui, sans-serif';
-        ctx.fillText(`평균 ${avgStars.toFixed(1)}★`, x + 24, y + 168);
+        ctx.fillText(`별 합계 ${stat.stars} / 평균 ${avgStars.toFixed(1)}`, x + 24, y + 162);
 
         // 진행률 바
         const barW = 380;
@@ -540,7 +543,7 @@
           </div>
           
           <div class="text-center mt-3">
-            <span class="text-xs text-slate-400">인스타·카톡에 자랑해보세요! (완전 무료)</span>
+            <span class="text-xs text-slate-400">인스타·카톡에 성장 기록을 자랑해보세요</span>
           </div>
         </div>
       `;
